@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Iinclude -Ilibs/imgui -Ilibs/imgui/backends
-LDFLAGS = -lglfw -lGL -ldl -lpthread
+LDFLAGS = -lglfw -lGL -ldl -lpthread -lsqlite3
 
 IMGUI_SRC = libs/imgui/imgui.cpp \
             libs/imgui/imgui_draw.cpp \
@@ -11,6 +11,7 @@ IMGUI_SRC = libs/imgui/imgui.cpp \
             libs/imgui/backends/imgui_impl_opengl3.cpp
 
 SRC = src/main.cpp $(IMGUI_SRC)
+SRC += src/Database.cpp src/User.cpp src/Team.cpp src/League.cpp src/Match.cpp
 
 TARGET = football-standings
 

@@ -1,0 +1,7 @@
+Database initialized successfully.
+leagues: created
+teams: created
+players: created
+matches: created
+users: created
+All required tables are present.
