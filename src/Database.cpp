@@ -97,7 +97,6 @@ int Database::getCountForTwoIds(const std::string& sql, int id1, int id2) const 
 
 std::string Database::hashPassword(const std::string& password) const {
     // Simple deterministic hash for a course project.
-    // It is not meant to be strong security, only to avoid storing plain text.
     unsigned long long hash = 5381;
     for (size_t i = 0; i < password.size(); ++i) {
         hash = ((hash << 5) + hash) + static_cast<unsigned char>(password[i]);
@@ -262,6 +261,34 @@ void Database::updateTeam(int teamId, const std::string& name) {
 
     if (result != SQLITE_DONE) {
         throw DatabaseException("Could not update team");
+    }
+}
+
+void Database::registerViewer(const std::string& username, const std::string& password) {
+    if (username.empty()) {
+        throw ValidationException("Username cannot be empty");
+    }
+
+    if (password.empty()) {
+        throw ValidationException("Password cannot be empty");
+    }
+
+    sqlite3_stmt* stmt = prepareStatement(
+        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'Viewer');");
+
+    std::string passwordHash = hashPassword(password);
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, passwordHash.c_str(), -1, SQLITE_TRANSIENT);
+
+    int result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (result == SQLITE_CONSTRAINT) {
+        throw ValidationException("Username already taken");
+    }
+
+    if (result != SQLITE_DONE) {
+        throw DatabaseException("Could not create account");
     }
 }
 

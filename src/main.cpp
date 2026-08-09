@@ -10,14 +10,23 @@
 
 struct LoginState {
     bool loggedIn;
+    bool showSignUp;
     User* currentUser;
     char username[128];
     char password[128];
+    char signupUsername[128];
+    char signupPassword[128];
+    char signupConfirm[128];
     std::string errorMessage;
+    std::string signupErrorMessage;
+    std::string signupSuccessMessage;
 
-    LoginState() : loggedIn(false), currentUser(nullptr) {
+    LoginState() : loggedIn(false), showSignUp(false), currentUser(nullptr) {
         username[0] = '\0';
         password[0] = '\0';
+        signupUsername[0] = '\0';
+        signupPassword[0] = '\0';
+        signupConfirm[0] = '\0';
     }
 };
 
@@ -281,34 +290,91 @@ int main() {
 
             if (!loginState.loggedIn) {
                 ImGui::Begin("Login", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-                ImGui::Text("Enter your username and password.");
+                if (!loginState.showSignUp) {
+                    ImGui::Text("Enter your username and password.");
 
-                if (!loginState.errorMessage.empty()) {
-                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", loginState.errorMessage.c_str());
-                }
+                    if (!loginState.errorMessage.empty()) {
+                        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", loginState.errorMessage.c_str());
+                    }
 
-                ImGui::InputText("Username", loginState.username, sizeof(loginState.username));
-                ImGui::InputText("Password", loginState.password, sizeof(loginState.password), ImGuiInputTextFlags_Password);
+                    if (!loginState.signupSuccessMessage.empty()) {
+                        ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.0f), "%s", loginState.signupSuccessMessage.c_str());
+                    }
 
-                if (ImGui::Button("Login")) {
-                    try {
-                        if (loginState.currentUser != nullptr) {
-                            delete loginState.currentUser;
-                            loginState.currentUser = nullptr;
+                    ImGui::InputText("Username", loginState.username, sizeof(loginState.username));
+                    ImGui::InputText("Password", loginState.password, sizeof(loginState.password), ImGuiInputTextFlags_Password);
+
+                    if (ImGui::Button("Login")) {
+                        try {
+                            if (loginState.currentUser != nullptr) {
+                                delete loginState.currentUser;
+                                loginState.currentUser = nullptr;
+                            }
+
+                            loginState.currentUser = database.authenticateUser(loginState.username, loginState.password);
+                            loginState.loggedIn = true;
+                            loginState.errorMessage.clear();
+                            loginState.signupSuccessMessage.clear();
+                            loginState.password[0] = '\0';
+                        } catch (const DatabaseException& e) {
+                            loginState.loggedIn = false;
+                            loginState.errorMessage = e.what();
+
+                            if (loginState.currentUser != nullptr) {
+                                delete loginState.currentUser;
+                                loginState.currentUser = nullptr;
+                            }
                         }
+                    }
 
-                        loginState.currentUser = database.authenticateUser(loginState.username, loginState.password);
-                        loginState.loggedIn = true;
+                    ImGui::SameLine();
+                    if (ImGui::Button("Sign Up")) {
+                        loginState.showSignUp = true;
                         loginState.errorMessage.clear();
-                        loginState.password[0] = '\0';
-                    } catch (const DatabaseException& e) {
-                        loginState.loggedIn = false;
-                        loginState.errorMessage = e.what();
+                        loginState.signupErrorMessage.clear();
+                        loginState.signupSuccessMessage.clear();
+                    }
+                } else {
+                    ImGui::Text("Create a new Viewer account.");
 
-                        if (loginState.currentUser != nullptr) {
-                            delete loginState.currentUser;
-                            loginState.currentUser = nullptr;
+                    if (!loginState.signupErrorMessage.empty()) {
+                        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", loginState.signupErrorMessage.c_str());
+                    }
+
+                    ImGui::InputText("Username", loginState.signupUsername, sizeof(loginState.signupUsername));
+                    ImGui::InputText("Password", loginState.signupPassword, sizeof(loginState.signupPassword), ImGuiInputTextFlags_Password);
+                    ImGui::InputText("Confirm Password", loginState.signupConfirm, sizeof(loginState.signupConfirm), ImGuiInputTextFlags_Password);
+
+                    if (ImGui::Button("Create Account")) {
+                        if (std::string(loginState.signupPassword) != std::string(loginState.signupConfirm)) {
+                            loginState.signupErrorMessage = "Passwords do not match";
+                            loginState.signupSuccessMessage.clear();
+                        } else {
+                            try {
+                                database.registerViewer(loginState.signupUsername, loginState.signupPassword);
+                                loginState.signupErrorMessage.clear();
+                                loginState.signupSuccessMessage = "Account created. Please log in.";
+
+                                // Copy the new username back to the login form so the student can test it quickly.
+                                std::snprintf(loginState.username, sizeof(loginState.username), "%s", loginState.signupUsername);
+                                loginState.password[0] = '\0';
+
+                                loginState.signupUsername[0] = '\0';
+                                loginState.signupPassword[0] = '\0';
+                                loginState.signupConfirm[0] = '\0';
+                                loginState.showSignUp = false;
+                            } catch (const DatabaseException& e) {
+                                loginState.signupErrorMessage = e.what();
+                                loginState.signupSuccessMessage.clear();
+                            }
                         }
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("Back to Login")) {
+                        loginState.showSignUp = false;
+                        loginState.signupErrorMessage.clear();
+                        loginState.signupSuccessMessage.clear();
                     }
                 }
 
@@ -323,9 +389,15 @@ int main() {
                     delete loginState.currentUser;
                     loginState.currentUser = nullptr;
                     loginState.loggedIn = false;
+                    loginState.showSignUp = false;
                     loginState.username[0] = '\0';
                     loginState.password[0] = '\0';
+                    loginState.signupUsername[0] = '\0';
+                    loginState.signupPassword[0] = '\0';
+                    loginState.signupConfirm[0] = '\0';
                     loginState.errorMessage.clear();
+                    loginState.signupErrorMessage.clear();
+                    loginState.signupSuccessMessage.clear();
                     adminUi.errorMessage.clear();
                     adminUi.successMessage.clear();
                 }
@@ -572,9 +644,15 @@ int main() {
                     delete loginState.currentUser;
                     loginState.currentUser = nullptr;
                     loginState.loggedIn = false;
+                    loginState.showSignUp = false;
                     loginState.username[0] = '\0';
                     loginState.password[0] = '\0';
+                    loginState.signupUsername[0] = '\0';
+                    loginState.signupPassword[0] = '\0';
+                    loginState.signupConfirm[0] = '\0';
                     loginState.errorMessage.clear();
+                    loginState.signupErrorMessage.clear();
+                    loginState.signupSuccessMessage.clear();
                     viewerUi.errorMessage.clear();
                     viewerUi.selectedLeagueIndex = -1;
                 }

@@ -53,6 +53,7 @@ public:
     int createLeague(const std::string& name);
     int addTeam(int leagueId, const std::string& name);
     void updateTeam(int teamId, const std::string& name);
+    void registerViewer(const std::string& username, const std::string& password);
     void deleteLeague(int leagueId);
     void deleteTeam(int teamId);
     int recordMatchResult(int leagueId, int homeTeamId, int awayTeamId, int homeScore, int awayScore, const std::string& matchDate);
