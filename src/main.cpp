@@ -5,6 +5,20 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <exception>
+#include <string>
+
+struct LoginState {
+    bool loggedIn;
+    User* currentUser;
+    char username[128];
+    char password[128];
+    std::string errorMessage;
+
+    LoginState() : loggedIn(false), currentUser(nullptr) {
+        username[0] = '\0';
+        password[0] = '\0';
+    }
+};
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -72,7 +86,7 @@ int main() {
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init(glsl_version);
 
-        bool show_demo_window = true;
+        LoginState loginState;
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -81,8 +95,57 @@ int main() {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            if (show_demo_window)
-                ImGui::ShowDemoWindow(&show_demo_window);
+            if (!loginState.loggedIn) {
+                ImGui::Begin("Login", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+                ImGui::Text("Enter your username and password.");
+
+                if (!loginState.errorMessage.empty()) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", loginState.errorMessage.c_str());
+                }
+
+                ImGui::InputText("Username", loginState.username, sizeof(loginState.username));
+                ImGui::InputText("Password", loginState.password, sizeof(loginState.password), ImGuiInputTextFlags_Password);
+
+                if (ImGui::Button("Login")) {
+                    try {
+                        if (loginState.currentUser != nullptr) {
+                            delete loginState.currentUser;
+                            loginState.currentUser = nullptr;
+                        }
+
+                        loginState.currentUser = database.authenticateUser(loginState.username, loginState.password);
+                        loginState.loggedIn = true;
+                        loginState.errorMessage.clear();
+                        loginState.password[0] = '\0';
+                    } catch (const DatabaseException& e) {
+                        loginState.loggedIn = false;
+                        loginState.errorMessage = e.what();
+
+                        if (loginState.currentUser != nullptr) {
+                            delete loginState.currentUser;
+                            loginState.currentUser = nullptr;
+                        }
+                    }
+                }
+
+                ImGui::End();
+            } else {
+                ImGui::Begin("Dashboard", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+                ImGui::Text("Logged in as %s", loginState.currentUser->getUsername().c_str());
+                ImGui::Text("Role: %s", loginState.currentUser->getRole().c_str());
+                ImGui::Text("Placeholder for the real Admin/Viewer screens.");
+
+                if (ImGui::Button("Logout")) {
+                    delete loginState.currentUser;
+                    loginState.currentUser = nullptr;
+                    loginState.loggedIn = false;
+                    loginState.username[0] = '\0';
+                    loginState.password[0] = '\0';
+                    loginState.errorMessage.clear();
+                }
+
+                ImGui::End();
+            }
 
             ImGui::Render();
             int display_w, display_h;
@@ -93,6 +156,10 @@ int main() {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);
+        }
+
+        if (loginState.currentUser != nullptr) {
+            delete loginState.currentUser;
         }
 
         ImGui_ImplOpenGL3_Shutdown();
