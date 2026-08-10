@@ -97,7 +97,6 @@ int Database::getCountForTwoIds(const std::string& sql, int id1, int id2) const 
 
 std::string Database::hashPassword(const std::string& password) const {
     // Simple deterministic hash for a course project.
-    // It is not meant to be strong security, only to avoid storing plain text.
     unsigned long long hash = 5381;
     for (size_t i = 0; i < password.size(); ++i) {
         hash = ((hash << 5) + hash) + static_cast<unsigned char>(password[i]);
@@ -265,6 +264,50 @@ void Database::updateTeam(int teamId, const std::string& name) {
     }
 }
 
+void Database::registerViewer(const std::string& username, const std::string& password) {
+    if (username.empty()) {
+        throw ValidationException("Username cannot be empty");
+    }
+
+    if (password.empty()) {
+        throw ValidationException("Password cannot be empty");
+    }
+
+    sqlite3_stmt* stmt = prepareStatement(
+        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'Viewer');");
+
+    std::string passwordHash = hashPassword(password);
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, passwordHash.c_str(), -1, SQLITE_TRANSIENT);
+
+    int result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (result == SQLITE_CONSTRAINT) {
+        throw ValidationException("Username already taken");
+    }
+
+    if (result != SQLITE_DONE) {
+        throw DatabaseException("Could not create account");
+    }
+}
+
+void Database::deleteLeague(int leagueId) {
+    if (getCountForId("SELECT COUNT(*) FROM leagues WHERE id = ?;", leagueId) == 0) {
+        throw NotFoundException("League not found");
+    }
+
+    sqlite3_stmt* stmt = prepareStatement("DELETE FROM leagues WHERE id = ?;");
+    sqlite3_bind_int(stmt, 1, leagueId);
+
+    int result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (result != SQLITE_DONE) {
+        throw DatabaseException("Could not delete league");
+    }
+}
+
 void Database::deleteTeam(int teamId) {
     if (getCountForId("SELECT COUNT(*) FROM teams WHERE id = ?;", teamId) == 0) {
         throw NotFoundException("Team not found");
@@ -346,8 +389,9 @@ std::vector<League> Database::getLeagues() const {
     sqlite3_stmt* stmt = prepareStatement("SELECT id, name FROM leagues ORDER BY name ASC;");
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int leagueId = sqlite3_column_int(stmt, 0);
         std::string leagueName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        League league(leagueName);
+        League league(leagueName, leagueId);
         leagues.push_back(league);
     }
 
@@ -363,6 +407,7 @@ std::vector<Team> Database::getTeams(int leagueId) const {
     sqlite3_bind_int(stmt, 1, leagueId);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int teamId = sqlite3_column_int(stmt, 0);
         std::string teamName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
         int played = sqlite3_column_int(stmt, 3);
         int wins = sqlite3_column_int(stmt, 4);
@@ -371,7 +416,7 @@ std::vector<Team> Database::getTeams(int leagueId) const {
         int goalsFor = sqlite3_column_int(stmt, 7);
         int goalsAgainst = sqlite3_column_int(stmt, 8);
         int points = sqlite3_column_int(stmt, 9);
-        Team team(teamName, played, wins, draws, losses, goalsFor, goalsAgainst, points);
+        Team team(teamName, teamId, played, wins, draws, losses, goalsFor, goalsAgainst, points);
         teams.push_back(team);
     }
 
@@ -388,6 +433,7 @@ std::vector<Team> Database::getStandings(int leagueId) const {
     sqlite3_bind_int(stmt, 1, leagueId);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int teamId = sqlite3_column_int(stmt, 0);
         std::string teamName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         int played = sqlite3_column_int(stmt, 2);
         int wins = sqlite3_column_int(stmt, 3);
@@ -396,7 +442,7 @@ std::vector<Team> Database::getStandings(int leagueId) const {
         int goalsFor = sqlite3_column_int(stmt, 6);
         int goalsAgainst = sqlite3_column_int(stmt, 7);
         int points = sqlite3_column_int(stmt, 8);
-        Team team(teamName, played, wins, draws, losses, goalsFor, goalsAgainst, points);
+        Team team(teamName, teamId, played, wins, draws, losses, goalsFor, goalsAgainst, points);
         standings.push_back(team);
     }
 

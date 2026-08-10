@@ -8,6 +8,7 @@
 
 class Team {
 private:
+    int id;
     std::string name;
     int played;
     int wins;
@@ -26,6 +27,19 @@ public:
          int goalsFor = 0,
          int goalsAgainst = 0,
          int points = 0);
+
+    Team(const std::string& name,
+         int id,
+         int played,
+         int wins,
+         int draws,
+         int losses,
+         int goalsFor,
+         int goalsAgainst,
+         int points);
+
+    int getId() const;
+    void setId(int newId);
 
     std::string getName() const;
     int getPlayed() const;

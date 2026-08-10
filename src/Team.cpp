@@ -8,7 +8,27 @@ Team::Team(const std::string& name,
            int goalsFor,
            int goalsAgainst,
            int points)
-    : name(name), played(played), wins(wins), draws(draws), losses(losses), goalsFor(goalsFor), goalsAgainst(goalsAgainst), points(points) {
+    : id(-1), name(name), played(played), wins(wins), draws(draws), losses(losses), goalsFor(goalsFor), goalsAgainst(goalsAgainst), points(points) {
+}
+
+Team::Team(const std::string& name,
+           int id,
+           int played,
+           int wins,
+           int draws,
+           int losses,
+           int goalsFor,
+           int goalsAgainst,
+           int points)
+    : id(id), name(name), played(played), wins(wins), draws(draws), losses(losses), goalsFor(goalsFor), goalsAgainst(goalsAgainst), points(points) {
+}
+
+int Team::getId() const {
+    return id;
+}
+
+void Team::setId(int newId) {
+    id = newId;
 }
 
 std::string Team::getName() const {

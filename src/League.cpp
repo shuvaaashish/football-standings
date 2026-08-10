@@ -1,6 +1,17 @@
 #include "League.h"
 
-League::League(const std::string& name) : name(name) {
+League::League(const std::string& name) : id(-1), name(name) {
+}
+
+League::League(const std::string& name, int id) : id(id), name(name) {
+}
+
+int League::getId() const {
+    return id;
+}
+
+void League::setId(int newId) {
+    id = newId;
 }
 
 std::string League::getName() const {
