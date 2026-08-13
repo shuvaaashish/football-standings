@@ -125,12 +125,16 @@ void RealFootballUI::renderMatches(FootballApi::RealFootballService& service) {
     
     for (auto it = byDate.rbegin(); it != byDate.rend(); ++it) {
         Design::SectionTitle(it->first.c_str());
+        int rowIndex = 0;
         for (const auto& m : it->second) {
+            ImGui::PushID(m.id != 0 ? m.id : rowIndex);
             bool hasScore = (m.status == "FINISHED" || m.status == "IN_PLAY" || m.status == "PAUSED");
             int hScore = m.homeScoreFullTime.value_or(0);
             int aScore = m.awayScoreFullTime.value_or(0);
             
             Design::MatchRow(m.homeTeam.name, hScore, aScore, m.awayTeam.name, m.status, m.utcDate, hasScore);
+            ImGui::PopID();
+            ++rowIndex;
         }
         Design::Spacing(2);
     }
@@ -199,7 +203,9 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
             ImGui::TableHeadersRow();
             ImGui::PopStyleColor();
 
-            for (const auto& s : standings) {
+            for (size_t i = 0; i < standings.size(); ++i) {
+                const auto& s = standings[i];
+                ImGui::PushID(static_cast<int>(i));
                 ImGui::TableNextRow();
 
                 ImGui::TableNextColumn();
@@ -233,6 +239,7 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
                 ImGui::PushStyleColor(ImGuiCol_Text, Design::ColPrimary);
                 ImGui::Text("%d", s.points);
                 ImGui::PopStyleColor();
+                ImGui::PopID();
             }
 
             ImGui::EndTable();

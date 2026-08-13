@@ -35,8 +35,12 @@ void FixturesUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache
 
     for (auto it = byDate.rbegin(); it != byDate.rend(); ++it) {
         Design::SectionTitle(it->first.c_str());
+        size_t rowIndex = 0;
         for (const auto& m : it->second) {
+            ImGui::PushID(static_cast<int>(rowIndex));
             Design::MatchRow(m.getHomeTeamName(), m.getHomeScore(), m.getAwayScore(), m.getAwayTeamName(), "FINISHED", it->first, true);
+            ImGui::PopID();
+            ++rowIndex;
         }
         Design::Spacing(2);
     }

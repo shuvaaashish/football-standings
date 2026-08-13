@@ -1,6 +1,17 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Iinclude -Isrc -Ilibs/imgui -Ilibs/imgui/backends
-LDFLAGS = -lglfw3 -lopengl32 -lsqlite3 -lcurl
+
+# Detect platform and set the correct linker flags automatically.
+# On Linux/WSL: uname reports "Linux" -> use -lglfw -lGL (system OpenGL/GLFW).
+# On Windows/MSYS2: uname reports something starting with "MINGW" or "MSYS" -> use -lglfw3 -lopengl32.
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+	LDFLAGS = -lglfw -lGL -ldl -lpthread -lsqlite3 -lcurl
+else
+	# Covers MINGW64_NT-*, MSYS_NT-*, etc.
+	LDFLAGS = -lglfw3 -lopengl32 -lsqlite3 -lcurl
+endif
 
 IMGUI_SRC = libs/imgui/imgui.cpp \
             libs/imgui/imgui_draw.cpp \

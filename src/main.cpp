@@ -14,7 +14,7 @@
 #include "ui/UiState.h"
 #include "api/FootballApiClient.h"
 #include "api/RealFootballService.h"
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdio>
 #include <exception>

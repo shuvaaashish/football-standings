@@ -55,6 +55,7 @@ void StandingsUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
 
             for (int i = 0; i < static_cast<int>(standings.size()); ++i) {
                 const Team& t = standings[i];
+                ImGui::PushID(i);
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn(); Design::TextLabel(std::to_string(i+1).c_str());
                 ImGui::TableNextColumn(); ImGui::Text("%s", t.getName().c_str());
@@ -66,6 +67,7 @@ void StandingsUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
                 ImGui::PushStyleColor(ImGuiCol_Text, Design::ColPrimary);
                 ImGui::Text("%d", t.getPoints());
                 ImGui::PopStyleColor();
+                ImGui::PopID();
             }
 
             ImGui::EndTable();

@@ -143,13 +143,13 @@ float App::renderSidebar(AppState& state, bool& logoutRequested) {
     renderSidebarSection("REAL FOOTBALL");
     renderSidebarItem(" Competitions", Page::RealCompetitions, state);
     renderSidebarItem(" Matches", Page::RealMatches, state);
-    renderSidebarItem(" Standings", Page::RealStandings, state);
+    renderSidebarItem(" Standings##RealFootball", Page::RealStandings, state);
 
     // MY LEAGUES
     renderSidebarSection("MY LEAGUES");
     renderSidebarItem(" My Leagues", Page::CustomLeagues, state);
     renderSidebarItem(" Fixtures", Page::CustomFixtures, state);
-    renderSidebarItem(" Standings", Page::CustomStandings, state);
+    renderSidebarItem(" Standings##MyLeagues", Page::CustomStandings, state);
 
     // ADMIN
     if (state.role == "Admin") {
