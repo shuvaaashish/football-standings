@@ -59,3 +59,6 @@ data/*.db-journal
 # test output & cache
 Testing/
 .cache/
+
+# Local API Configuration
+config/ApiConfig.local.h
