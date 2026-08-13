@@ -9,7 +9,7 @@ void LeaguesUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache,
 
     auto leagues = uiCache.getLeagues();
     if (leagues.empty()) {
-        dbWorker.postTask([&uiCache](Database& db){ uiCache.refreshLeagues(db); });
+        dbWorker.postTaskOnce("refresh_leagues", [&uiCache](Database& db){ uiCache.refreshLeagues(db); });
         Design::EmptyState("No custom leagues available.");
     } else {
         float avail = ImGui::GetContentRegionAvail().x;

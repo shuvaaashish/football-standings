@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <queue>
 #include <atomic>
+#include <set>
 #include <string>
 
 #include "Database.h"
@@ -23,6 +24,10 @@ public:
     // when pollCompleted() is called.
     void postTask(TaskFunc task, Callback onComplete = nullptr);
 
+    // Queues a task only if another task with the same key is not already pending.
+    // Use this for cache refreshes requested from per-frame UI render functions.
+    void postTaskOnce(const std::string& key, TaskFunc task, Callback onComplete = nullptr);
+
     // Call from the main thread to execute completed callbacks.
     void pollCompleted();
 
@@ -36,6 +41,7 @@ private:
     std::mutex queueMutex;
     std::condition_variable queueCv;
     std::queue<std::pair<TaskFunc, Callback>> taskQueue;
+    std::set<std::string> pendingKeys;
 
     std::mutex completedMutex;
     std::queue<Callback> completedQueue;

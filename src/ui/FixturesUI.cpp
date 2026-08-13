@@ -24,7 +24,7 @@ void FixturesUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache
 
     auto matches = uiCache.getMatches(lid);
     if (matches.empty()) {
-        dbWorker.postTask([lid, &uiCache](Database& db){ uiCache.refreshMatches(db, lid); });
+        dbWorker.postTaskOnce("refresh_matches_" + std::to_string(lid), [lid, &uiCache](Database& db){ uiCache.refreshMatches(db, lid); });
         Design::EmptyState("Loading matches or no matches found.");
         return;
     }

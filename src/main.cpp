@@ -3,6 +3,7 @@
 #include "imgui_impl_opengl3.h"
 #include "Database.h"
 #include "ui/DbWorker.h"
+#include "api/ApiWorker.h"
 #include "ui/UiCache.h"
 #include "ui/App.h"
 #include "ui/DashboardUI.h"
@@ -96,8 +97,9 @@ int main() {
         // FootballApi::runApiConnectionTest(); // Disabled — using RealFootballService now
 
         DbWorker dbWorker;
+        ApiWorker apiWorker;
         UiCache uiCache;
-        FootballApi::RealFootballService realFootballService;
+        FootballApi::RealFootballService realFootballService(apiWorker);
 
         UI::App app;
         app.applyTheme();
@@ -110,6 +112,7 @@ int main() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
             dbWorker.pollCompleted();
+            apiWorker.pollCompleted();
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -323,6 +326,7 @@ int main() {
 
         // Ensure background worker shuts down cleanly before exiting.
         dbWorker.shutdown();
+        apiWorker.shutdown();
 
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();

@@ -18,6 +18,29 @@ void DbWorker::postTask(TaskFunc task, Callback onComplete) {
     queueCv.notify_one();
 }
 
+void DbWorker::postTaskOnce(const std::string& key, TaskFunc task, Callback onComplete) {
+    {
+        std::lock_guard<std::mutex> lg(queueMutex);
+        if (pendingKeys.find(key) != pendingKeys.end()) return;
+        pendingKeys.insert(key);
+
+        // Clear the key when the worker finishes, including when the task throws.
+        TaskFunc wrappedTask = [this, key, task](Database& db) {
+            try {
+                task(db);
+            } catch (...) {
+                std::lock_guard<std::mutex> keyLock(queueMutex);
+                pendingKeys.erase(key);
+                throw;
+            }
+            std::lock_guard<std::mutex> keyLock(queueMutex);
+            pendingKeys.erase(key);
+        };
+        taskQueue.emplace(std::move(wrappedTask), std::move(onComplete));
+    }
+    queueCv.notify_one();
+}
+
 void DbWorker::pollCompleted() {
     std::queue<Callback> local;
     {

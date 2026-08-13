@@ -11,65 +11,8 @@ App::~App() {
 }
 
 void App::applyTheme() {
-    ImGuiStyle& style = ImGui::GetStyle();
-    
-    // Apply Design System globals
-    style.Colors[ImGuiCol_WindowBg]             = Design::ColBackground;
-    style.Colors[ImGuiCol_ChildBg]              = Design::ColBackground;
-    style.Colors[ImGuiCol_PopupBg]              = Design::ColSurface;
-    
-    style.Colors[ImGuiCol_Border]               = Design::ColBorder;
-    style.Colors[ImGuiCol_BorderShadow]         = ImVec4(0, 0, 0, 0);
-    
-    style.Colors[ImGuiCol_FrameBg]              = Design::ColSurface;
-    style.Colors[ImGuiCol_FrameBgHovered]       = Design::ColSurfaceHover;
-    style.Colors[ImGuiCol_FrameBgActive]        = Design::ColSurfaceHover;
-    
-    style.Colors[ImGuiCol_TitleBg]              = Design::ColBackground;
-    style.Colors[ImGuiCol_TitleBgActive]        = Design::ColBackground;
-    
-    style.Colors[ImGuiCol_Header]               = Design::ColSurfaceHover;
-    style.Colors[ImGuiCol_HeaderHovered]        = Design::ColSurfaceHover;
-    style.Colors[ImGuiCol_HeaderActive]         = Design::ColPrimary;
-    
-    style.Colors[ImGuiCol_Button]               = Design::ColSurface;
-    style.Colors[ImGuiCol_ButtonHovered]        = Design::ColSurfaceHover;
-    style.Colors[ImGuiCol_ButtonActive]         = Design::ColPrimary;
-    
-    style.Colors[ImGuiCol_Text]                 = Design::ColTextPrimary;
-    style.Colors[ImGuiCol_TextDisabled]         = Design::ColTextSecondary;
-    
-    style.Colors[ImGuiCol_Tab]                  = Design::ColSurface;
-    style.Colors[ImGuiCol_TabHovered]           = Design::ColSurfaceHover;
-    style.Colors[ImGuiCol_TabActive]            = Design::ColPrimary;
-    
-    style.Colors[ImGuiCol_TableHeaderBg]        = Design::ColSurface;
-    style.Colors[ImGuiCol_TableRowBg]           = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-    style.Colors[ImGuiCol_TableRowBgAlt]        = ImVec4(1.0f, 1.0f, 1.0f, 0.02f);
-    
-    style.Colors[ImGuiCol_CheckMark]            = Design::ColPrimary;
-    style.Colors[ImGuiCol_SliderGrab]           = Design::ColPrimary;
-    style.Colors[ImGuiCol_SliderGrabActive]     = Design::ColPrimaryHover;
-
-    style.WindowRounding    = 0.0f;
-    style.ChildRounding     = 8.0f;
-    style.FrameRounding     = 6.0f;
-    style.PopupRounding     = 6.0f;
-    style.ScrollbarRounding = 12.0f;
-    style.GrabRounding      = 6.0f;
-    style.TabRounding       = 6.0f;
-
-    style.WindowBorderSize  = 0.0f;
-    style.ChildBorderSize   = 1.0f;
-    style.FrameBorderSize   = 1.0f;
-
-    style.WindowPadding     = ImVec2(16, 16);
-    style.FramePadding      = ImVec2(12, 8);
-    style.ItemSpacing       = ImVec2(12, 12);
-    style.ItemInnerSpacing  = ImVec2(8, 8);
-    
-    ImGuiIO& io = ImGui::GetIO();
-    io.FontGlobalScale = 1.05f;
+    Design::ApplyTheme();
+    Design::LoadDefaultFont(ImGui::GetIO());
 }
 
 void App::renderSidebarSection(const char* title) {

@@ -1,11 +1,21 @@
 #include "RealFootballUI.h"
 #include "DesignSystem.h"
+#include "ImageCache.h"
 #include "imgui.h"
 #include <string>
 #include <map>
 #include <vector>
 
 using namespace UI;
+
+namespace {
+
+UI::ImageCache& GetRealLogoCache() {
+    static UI::ImageCache cache;
+    return cache;
+}
+
+} // namespace
 
 // ─── Competitions Page ──────────────────────────────────────────────────────
 
@@ -19,9 +29,11 @@ void RealFootballUI::renderCompetitions(FootballApi::RealFootballService& servic
     }
 
     if (!service.areCompetitionsLoaded()) {
-        Design::EmptyState("Competitions have not been loaded yet.");
-        if (Design::PrimaryButton("Load Competitions")) {
-            service.loadCompetitions();
+        if (service.isLoadingCompetitions()) {
+            Design::EmptyState("Loading competitions...");
+        } else {
+            Design::EmptyState("Competitions have not been loaded yet.");
+            if (Design::PrimaryButton("Load Competitions")) service.loadCompetitions();
         }
         return;
     }
@@ -45,19 +57,28 @@ void RealFootballUI::renderCompetitions(FootballApi::RealFootballService& servic
             ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
         }
 
-        if (Design::BeginCard(("comp_" + std::to_string(c.id)).c_str(), ImVec2(0, 100))) {
+        if (Design::BeginCard(("comp_" + std::to_string(c.id)).c_str(), ImVec2(0, 120))) {
+            ImGui::BeginGroup();
+            if (!c.emblemUrl.empty()) {
+                ImTextureID tex = GetRealLogoCache().getTexture(c.emblemUrl);
+                if (tex != 0) {
+                    ImGui::Image(tex, ImVec2(24.0f, 24.0f));
+                    ImGui::SameLine();
+                }
+            }
             if (isSelected) {
                 ImGui::PushStyleColor(ImGuiCol_Text, Design::ColPrimary);
-                ImGui::Text("%s", c.name.c_str());
+                ImGui::TextUnformatted(c.name.c_str());
                 ImGui::PopStyleColor();
             } else {
-                ImGui::Text("%s", c.name.c_str());
+                ImGui::TextUnformatted(c.name.c_str());
             }
+            ImGui::EndGroup();
 
+            ImGui::SetCursorPosY(42.0f);
             Design::TextLabel(c.areaName.c_str());
-            
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - 28.0f);
-            
+
+            ImGui::SetCursorPosY(66.0f);
             if (isSelected) {
                 Design::Badge("SELECTED", Design::ColPrimary);
             } else {
@@ -107,9 +128,11 @@ void RealFootballUI::renderMatches(FootballApi::RealFootballService& service) {
     Design::Spacing(2);
 
     if (!service.areMatchesLoaded()) {
-        Design::EmptyState("Matches have not been loaded yet.");
-        if (Design::PrimaryButton("Load Matches")) {
-            service.loadMatches();
+        if (service.isLoadingMatches()) {
+            Design::EmptyState("Loading matches...");
+        } else {
+            Design::EmptyState("Matches have not been loaded yet.");
+            if (Design::PrimaryButton("Load Matches")) service.loadMatches();
         }
         return;
     }
@@ -131,8 +154,7 @@ void RealFootballUI::renderMatches(FootballApi::RealFootballService& service) {
             bool hasScore = (m.status == "FINISHED" || m.status == "IN_PLAY" || m.status == "PAUSED");
             int hScore = m.homeScoreFullTime.value_or(0);
             int aScore = m.awayScoreFullTime.value_or(0);
-            
-            Design::MatchRow(m.homeTeam.name, hScore, aScore, m.awayTeam.name, m.status, m.utcDate, hasScore);
+            Design::MatchRow(m.homeTeam.name, hScore, aScore, m.awayTeam.name, m.status, m.utcDate, hasScore, m.homeTeam.crestUrl, m.awayTeam.crestUrl);
             ImGui::PopID();
             ++rowIndex;
         }
@@ -169,9 +191,11 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
     Design::Spacing(2);
 
     if (!service.areStandingsLoaded()) {
-        Design::EmptyState("Standings have not been loaded yet.");
-        if (Design::PrimaryButton("Load Standings")) {
-            service.loadStandings();
+        if (service.isLoadingStandings()) {
+            Design::EmptyState("Loading standings...");
+        } else {
+            Design::EmptyState("Standings have not been loaded yet.");
+            if (Design::PrimaryButton("Load Standings")) service.loadStandings();
         }
         return;
     }
@@ -198,7 +222,6 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
             ImGui::TableSetupColumn("GD", ImGuiTableColumnFlags_WidthFixed, 35.0f);
             ImGui::TableSetupColumn("Pts", ImGuiTableColumnFlags_WidthFixed, 35.0f);
             
-            // Header styling
             ImGui::PushStyleColor(ImGuiCol_Text, Design::ColTextSecondary);
             ImGui::TableHeadersRow();
             ImGui::PopStyleColor();
@@ -212,6 +235,13 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
                 Design::TextLabel(std::to_string(s.position).c_str());
 
                 ImGui::TableNextColumn();
+                if (!s.team.crestUrl.empty()) {
+                    ImTextureID tex = GetRealLogoCache().getTexture(s.team.crestUrl);
+                    if (tex != 0) {
+                        ImGui::Image(tex, ImVec2(18.0f, 18.0f));
+                        ImGui::SameLine();
+                    }
+                }
                 ImGui::Text("%s", s.team.name.c_str());
 
                 ImGui::TableNextColumn();

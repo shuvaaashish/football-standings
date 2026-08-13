@@ -18,7 +18,7 @@ void DashboardUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
     
     const auto& leagues = uiCache.getLeagues();
     if (leagues.empty()) {
-        dbWorker.postTask([&uiCache](Database& db){ uiCache.refreshLeagues(db); });
+        dbWorker.postTaskOnce("refresh_leagues", [&uiCache](Database& db){ uiCache.refreshLeagues(db); });
     }
 
     if (ImGui::BeginChild("stats_row", ImVec2(0, 110), false)) {
@@ -85,12 +85,12 @@ void DashboardUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
 
     // ── Quick Access ──
     Design::SectionTitle("Quick Access");
-    if (ImGui::BeginChild("quick_access", ImVec2(0, 100), false)) {
+    if (ImGui::BeginChild("quick_access", ImVec2(0, 135), false)) {
         float cardWidth = 240.0f;
         
-        if (Design::BeginCard("qa_real", ImVec2(cardWidth, 80))) {
+        if (Design::BeginCard("qa_real", ImVec2(cardWidth, 110))) {
             ImGui::Text("Browse Competitions");
-            Design::Spacing(1);
+            ImGui::SetCursorPosY(56.0f);
             if (Design::PrimaryButton("Open##1", ImVec2(-1, 0))) {
                 appState.currentPage = Page::RealCompetitions;
             }
@@ -99,9 +99,9 @@ void DashboardUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
         
         ImGui::SameLine();
         
-        if (Design::BeginCard("qa_custom", ImVec2(cardWidth, 80))) {
+        if (Design::BeginCard("qa_custom", ImVec2(cardWidth, 110))) {
             ImGui::Text("View My Leagues");
-            Design::Spacing(1);
+            ImGui::SetCursorPosY(56.0f);
             if (Design::PrimaryButton("Open##2", ImVec2(-1, 0))) {
                 appState.currentPage = Page::CustomLeagues;
             }
@@ -110,9 +110,9 @@ void DashboardUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
         
         if (appState.role == "Admin") {
             ImGui::SameLine();
-            if (Design::BeginCard("qa_admin", ImVec2(cardWidth, 80))) {
+            if (Design::BeginCard("qa_admin", ImVec2(cardWidth, 110))) {
                 ImGui::Text("Management");
-                Design::Spacing(1);
+                ImGui::SetCursorPosY(56.0f);
                 if (Design::PrimaryButton("Open##3", ImVec2(-1, 0))) {
                     appState.currentPage = Page::Admin;
                 }
@@ -130,7 +130,7 @@ void DashboardUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
     std::vector<Match> recent;
     for (const auto& L : leagues) {
         auto m = uiCache.getMatches(L.getId());
-        if (m.empty()) dbWorker.postTask([id=L.getId(), &uiCache](Database& db){ uiCache.refreshMatches(db, id); });
+        if (m.empty()) dbWorker.postTaskOnce("refresh_matches_" + std::to_string(L.getId()), [id=L.getId(), &uiCache](Database& db){ uiCache.refreshMatches(db, id); });
         recent.insert(recent.end(), m.begin(), m.end());
     }
 

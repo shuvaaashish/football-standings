@@ -24,7 +24,7 @@ void StandingsUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCach
 
     auto teams = uiCache.getTeams(lid);
     if (teams.empty()) {
-        dbWorker.postTask([lid, &uiCache](Database& db){ uiCache.refreshTeams(db, lid); });
+        dbWorker.postTaskOnce("refresh_teams_" + std::to_string(lid), [lid, &uiCache](Database& db){ uiCache.refreshTeams(db, lid); });
         Design::EmptyState("Loading teams...");
         return;
     }

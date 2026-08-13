@@ -10,6 +10,7 @@ namespace Design {
     // ─── Colors ─────────────────────────────────────────────────────────────
     extern const ImVec4 ColBackground;
     extern const ImVec4 ColSurface;
+    extern const ImVec4 ColSurfaceAlt;
     extern const ImVec4 ColSurfaceHover;
     extern const ImVec4 ColPrimary;
     extern const ImVec4 ColPrimaryHover;
@@ -19,6 +20,9 @@ namespace Design {
     extern const ImVec4 ColSuccess;
     extern const ImVec4 ColWarning;
     extern const ImVec4 ColError;
+
+    void ApplyTheme();
+    void LoadDefaultFont(ImGuiIO& io);
 
     // ─── Typography Helpers ─────────────────────────────────────────────────
     void PageTitle(const char* title);
@@ -40,7 +44,8 @@ namespace Design {
     void StatusBadge(const std::string& status);
 
     // Matches
-    void MatchRow(const std::string& homeTeam, int homeScore, int awayScore, const std::string& awayTeam, const std::string& status, const std::string& date, bool hasScore);
+    void MatchRow(const std::string& homeTeam, int homeScore, int awayScore, const std::string& awayTeam, const std::string& status, const std::string& date, bool hasScore,
+                  const std::string& homeCrestUrl = "", const std::string& awayCrestUrl = "");
 
     // Buttons
     bool PrimaryButton(const char* label, const ImVec2& size = ImVec2(0, 0));

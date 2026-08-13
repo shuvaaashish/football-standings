@@ -19,7 +19,7 @@ void AdminUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache, A
     }
 
     auto leagues = uiCache.getLeagues();
-    if (leagues.empty()) dbWorker.postTask([&uiCache](Database& db){ uiCache.refreshLeagues(db); });
+    if (leagues.empty()) dbWorker.postTaskOnce("refresh_leagues", [&uiCache](Database& db){ uiCache.refreshLeagues(db); });
 
     std::vector<std::string> leagueNames;
     std::vector<const char*> leagueLabels;
@@ -115,7 +115,7 @@ void AdminUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache, A
                 Design::SectionTitle("Teams in Selected League");
                 int lid = leagueIds[adminUi.selectedLeagueForTeams];
                 auto teams = uiCache.getTeams(lid);
-                if (teams.empty()) dbWorker.postTask([lid, &uiCache](Database& db){ uiCache.refreshTeams(db,lid); });
+                if (teams.empty()) dbWorker.postTaskOnce("refresh_teams_" + std::to_string(lid), [lid, &uiCache](Database& db){ uiCache.refreshTeams(db,lid); });
 
                 if (teams.empty()) {
                     Design::EmptyState("No teams in this league.");
@@ -171,7 +171,7 @@ void AdminUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache, A
 
                     int selectedLeagueId = leagueIds[adminUi.selectedLeagueForMatches];
                     auto teams = uiCache.getTeams(selectedLeagueId);
-                    if (teams.empty()) dbWorker.postTask([selectedLeagueId, &uiCache](Database& db){ uiCache.refreshTeams(db, selectedLeagueId); });
+                    if (teams.empty()) dbWorker.postTaskOnce("refresh_teams_" + std::to_string(selectedLeagueId), [selectedLeagueId, &uiCache](Database& db){ uiCache.refreshTeams(db, selectedLeagueId); });
 
                     std::vector<std::string> teamNames;
                     std::vector<const char*> teamLabels;
