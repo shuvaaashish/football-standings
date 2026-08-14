@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 using namespace UI;
 
@@ -146,11 +149,32 @@ void RealFootballUI::renderMatches(FootballApi::RealFootballService& service) {
         byDate[date].push_back(m);
     }
     
-    // Descending date order: most recent games appear at the top.
-    for (auto it = byDate.rbegin(); it != byDate.rend(); ++it) {
-        Design::SectionTitle(it->first.c_str());
+    // Show upcoming dates first (nearest first), then completed dates (newest first).
+    std::time_t now = std::time(nullptr);
+    std::tm utcNow{};
+#ifdef _WIN32
+    gmtime_s(&utcNow, &now);
+#else
+    gmtime_r(&now, &utcNow);
+#endif
+    std::ostringstream dateStream;
+    dateStream << std::put_time(&utcNow, "%Y-%m-%d");
+    const std::string today = dateStream.str();
+
+    std::vector<std::string> orderedDates;
+    auto firstUpcoming = byDate.lower_bound(today);
+    for (auto it = firstUpcoming; it != byDate.end(); ++it) {
+        orderedDates.push_back(it->first);
+    }
+    while (firstUpcoming != byDate.begin()) {
+        --firstUpcoming;
+        orderedDates.push_back(firstUpcoming->first);
+    }
+
+    for (const auto& date : orderedDates) {
+        Design::SectionTitle(date.c_str());
         int rowIndex = 0;
-        for (const auto& m : it->second) {
+        for (const auto& m : byDate.at(date)) {
             ImGui::PushID(m.id != 0 ? m.id : rowIndex);
             bool hasScore = (m.status == "FINISHED" || m.status == "IN_PLAY" || m.status == "PAUSED");
             int hScore = m.homeScoreFullTime.value_or(0);
