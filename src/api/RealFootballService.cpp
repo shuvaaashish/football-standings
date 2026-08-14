@@ -30,8 +30,9 @@ void RealFootballService::selectCompetition(int id, const std::string& code) {
     if (selectedCompetitionId != id) {
         selectedCompetitionId = id;
         selectedCompetitionCode = code;
-        // Don't clear vectors immediately so the UI does not flicker.
-        // The loaded-for ID checks keep old data from being displayed.
+        // Invalidate cached fetch results so old data is not shown as "loaded".
+        matchesLoadedForId = 0;
+        standingsLoadedForId = 0;
     }
 }
 

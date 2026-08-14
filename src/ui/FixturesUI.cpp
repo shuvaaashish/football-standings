@@ -33,7 +33,8 @@ void FixturesUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache
     std::map<std::string, std::vector<Match>> byDate;
     for (const auto& m : matches) byDate[m.getMatchDate()].push_back(m);
 
-    for (auto it = byDate.rbegin(); it != byDate.rend(); ++it) {
+    // Ascending date order: soonest fixture first (std::map keys are already sorted ASC).
+    for (auto it = byDate.begin(); it != byDate.end(); ++it) {
         Design::SectionTitle(it->first.c_str());
         size_t rowIndex = 0;
         for (const auto& m : it->second) {

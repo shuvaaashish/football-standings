@@ -152,10 +152,14 @@ namespace Design {
         ImGui::PushStyleColor(ImGuiCol_Border, ColBorder);
         ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 12.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f, 14.0f));
-        bool ret = ImGui::BeginChild(id, size, true, 0);
+        // BeginChild() must always be paired with EndChild(), even when it
+        // returns false because the card is clipped. All card call sites use
+        // the return value to decide whether to call EndCard(), so keep the
+        // body active and guarantee that pairing.
+        ImGui::BeginChild(id, size, true, 0);
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(2);
-        return ret;
+        return true;
     }
 
     void EndCard() {

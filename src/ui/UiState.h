@@ -20,6 +20,7 @@ struct AdminUiState {
     int selectedAwayTeam = 0;
     int homeScore = 0;
     int awayScore = 0;
+    char matchDateBuffer[16] = "";
     std::string errorMessage;
     std::string successMessage;
 

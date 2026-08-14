@@ -146,6 +146,7 @@ void RealFootballUI::renderMatches(FootballApi::RealFootballService& service) {
         byDate[date].push_back(m);
     }
     
+    // Descending date order: most recent games appear at the top.
     for (auto it = byDate.rbegin(); it != byDate.rend(); ++it) {
         Design::SectionTitle(it->first.c_str());
         int rowIndex = 0;
@@ -202,15 +203,21 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
 
     const auto& standings = service.getStandings();
 
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, Design::ColSurface);
-    ImGui::PushStyleColor(ImGuiCol_Border, Design::ColBorder);
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
-    
-    if (ImGui::BeginChild("standings_panel", ImVec2(0, 0), true)) {
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1,1,1,0.05f));
-        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(10, 8));
-        
-        if (ImGui::BeginTable("real_standings_table", 10, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersInnerH, ImVec2(0, 0))) {
+    // Group rows by API group label (e.g. "Group A", "Group B"). Leagues use an empty key.
+    std::map<std::string, std::vector<RealFootball::RealStanding>> byGroup;
+    for (const auto& s : standings) {
+        byGroup[s.groupName].push_back(s);
+    }
+
+    if (byGroup.size() > 1) {
+        Design::TextMuted((std::to_string(byGroup.size()) + " groups — scroll down to see all").c_str());
+        Design::Spacing();
+    }
+
+    auto renderStandingsTable = [](const char* tableId, const std::vector<RealFootball::RealStanding>& groupStandings) {
+        // No ScrollY here: with ScrollY + full height, the first group table fills the panel
+        // and hides every group below it.
+        if (ImGui::BeginTable(tableId, 10, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH)) {
             ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, 30.0f);
             ImGui::TableSetupColumn("Team", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableSetupColumn("P", ImGuiTableColumnFlags_WidthFixed, 30.0f);
@@ -221,13 +228,13 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
             ImGui::TableSetupColumn("GA", ImGuiTableColumnFlags_WidthFixed, 35.0f);
             ImGui::TableSetupColumn("GD", ImGuiTableColumnFlags_WidthFixed, 35.0f);
             ImGui::TableSetupColumn("Pts", ImGuiTableColumnFlags_WidthFixed, 35.0f);
-            
+
             ImGui::PushStyleColor(ImGuiCol_Text, Design::ColTextSecondary);
             ImGui::TableHeadersRow();
             ImGui::PopStyleColor();
 
-            for (size_t i = 0; i < standings.size(); ++i) {
-                const auto& s = standings[i];
+            for (size_t i = 0; i < groupStandings.size(); ++i) {
+                const auto& s = groupStandings[i];
                 ImGui::PushID(static_cast<int>(i));
                 ImGui::TableNextRow();
 
@@ -274,11 +281,40 @@ void RealFootballUI::renderStandings(FootballApi::RealFootballService& service) 
 
             ImGui::EndTable();
         }
+    };
+
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, Design::ColSurface);
+    ImGui::PushStyleColor(ImGuiCol_Border, Design::ColBorder);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
+
+    if (ImGui::BeginChild("standings_panel", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1,1,1,0.05f));
+        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(10, 8));
+
+        int groupIndex = 0;
+        for (const auto& groupEntry : byGroup) {
+            ImGui::PushID(groupIndex);
+
+            if (!groupEntry.first.empty()) {
+                Design::SectionTitle(groupEntry.first.c_str());
+                Design::Spacing();
+            }
+
+            std::string tableId = groupEntry.first.empty()
+                ? ("standings_league_" + std::to_string(groupIndex))
+                : ("standings_" + groupEntry.first);
+            renderStandingsTable(tableId.c_str(), groupEntry.second);
+            Design::Spacing(2);
+
+            ImGui::PopID();
+            ++groupIndex;
+        }
+
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();
     }
     ImGui::EndChild();
-    
+
     ImGui::PopStyleVar();
     ImGui::PopStyleColor(2);
 }

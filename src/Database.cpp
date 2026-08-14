@@ -459,7 +459,7 @@ std::vector<Match> Database::getMatches(int leagueId) const {
         "JOIN teams ht ON m.home_team_id = ht.id "
         "JOIN teams at ON m.away_team_id = at.id "
         "WHERE m.league_id = ? "
-        "ORDER BY m.match_date DESC, m.id DESC;");
+        "ORDER BY m.match_date ASC, m.id ASC;");
     sqlite3_bind_int(stmt, 1, leagueId);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {

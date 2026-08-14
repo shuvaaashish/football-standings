@@ -42,6 +42,7 @@ struct RealMatch {
 };
 
 struct RealStanding {
+    std::string groupName;  // e.g. "Group A" for World Cup; empty for single-table leagues
     int position = 0;
     RealTeam team;
     int playedGames = 0;

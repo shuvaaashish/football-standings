@@ -24,10 +24,15 @@ void AdminUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache, A
     std::vector<std::string> leagueNames;
     std::vector<const char*> leagueLabels;
     std::vector<int> leagueIds;
+    leagueNames.reserve(leagues.size());
+    leagueLabels.reserve(leagues.size());
+    leagueIds.reserve(leagues.size());
     for (const auto& L : leagues) {
         leagueNames.push_back(L.getName());
-        leagueLabels.push_back(leagueNames.back().c_str());
         leagueIds.push_back(L.getId());
+    }
+    for (const auto& name : leagueNames) {
+        leagueLabels.push_back(name.c_str());
     }
 
     if (ImGui::BeginTabBar("AdminTabs")) {
@@ -190,20 +195,26 @@ void AdminUI::render(AppState& appState, DbWorker& dbWorker, UiCache& uiCache, A
                     Design::Spacing();
                     ImGui::InputInt("Home Score", &adminUi.homeScore);
                     ImGui::InputInt("Away Score", &adminUi.awayScore);
+                    ImGui::InputText("Match Date (YYYY-MM-DD)", adminUi.matchDateBuffer, sizeof(adminUi.matchDateBuffer));
                     Design::Spacing();
 
                     if (Design::PrimaryButton("Submit Result", ImVec2(150, 40))) {
                         if (teams.empty()) { adminUi.errorMessage = "No teams available for selected league."; }
+                        else if (adminUi.matchDateBuffer[0] == '\0') {
+                            adminUi.errorMessage = "Please enter a match date (YYYY-MM-DD).";
+                            adminUi.successMessage.clear();
+                        }
                         else {
                             int homeTeamId = teams[adminUi.selectedHomeTeam].getId();
                             int awayTeamId = teams[adminUi.selectedAwayTeam].getId();
                             int homeScore = adminUi.homeScore;
                             int awayScore = adminUi.awayScore;
                             int leagueId = selectedLeagueId;
+                            std::string matchDate = adminUi.matchDateBuffer;
 
                             auto result = std::make_shared<std::string>();
-                            dbWorker.postTask([leagueId, homeTeamId, awayTeamId, homeScore, awayScore, result, &uiCache](Database& db){ try{ db.recordMatchResult(leagueId, homeTeamId, awayTeamId, homeScore, awayScore, "2026-08-09"); uiCache.refreshTeams(db, leagueId); uiCache.refreshMatches(db, leagueId);} catch(const DatabaseException& e){ *result = e.what(); } },
-                                              [result, &adminUi](){ if (result->empty()) { adminUi.successMessage = "Match result saved."; adminUi.errorMessage.clear(); adminUi.homeScore=0; adminUi.awayScore=0;} else { adminUi.errorMessage = *result; adminUi.successMessage.clear(); } });
+                            dbWorker.postTask([leagueId, homeTeamId, awayTeamId, homeScore, awayScore, matchDate, result, &uiCache](Database& db){ try{ db.recordMatchResult(leagueId, homeTeamId, awayTeamId, homeScore, awayScore, matchDate); uiCache.refreshTeams(db, leagueId); uiCache.refreshMatches(db, leagueId);} catch(const DatabaseException& e){ *result = e.what(); } },
+                                              [result, &adminUi](){ if (result->empty()) { adminUi.successMessage = "Match result saved."; adminUi.errorMessage.clear(); adminUi.homeScore=0; adminUi.awayScore=0; adminUi.matchDateBuffer[0] = '\0';} else { adminUi.errorMessage = *result; adminUi.successMessage.clear(); } });
                         }
                     }
                     Design::EndCard();

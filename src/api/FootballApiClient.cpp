@@ -213,13 +213,20 @@ fetchCompetitionStandings(const std::string& competitionCode) {
 
     try {
         json j = json::parse(body);
-        // The API returns standings as an array of "standing types" (TOTAL, HOME, AWAY).
-        // We want the first one (TOTAL).
-        if (j.contains("standings") && j["standings"].is_array() && !j["standings"].empty()) {
-            const auto& firstTable = j["standings"][0]; // "TOTAL" table
-            if (firstTable.contains("table") && firstTable["table"].is_array()) {
-                for (const auto& entry : firstTable["table"]) {
+        // World Cup-style: one standings[] element per group, each with "group" + "table".
+        // League-style: a single element with no "group" field. Loop every element — do not filter by type.
+        if (j.contains("standings") && j["standings"].is_array()) {
+            for (const auto& standingBlock : j["standings"]) {
+                if (!standingBlock.contains("table") || !standingBlock["table"].is_array()) continue;
+
+                std::string groupName;
+                if (standingBlock.contains("group") && standingBlock["group"].is_string()) {
+                    groupName = standingBlock["group"].get<std::string>();
+                }
+
+                for (const auto& entry : standingBlock["table"]) {
                     RealFootball::RealStanding s;
+                    s.groupName      = groupName;
                     s.position       = (entry.contains("position") && entry["position"].is_number()) ? entry["position"].get<int>() : 0;
                     s.playedGames    = (entry.contains("playedGames") && entry["playedGames"].is_number()) ? entry["playedGames"].get<int>() : 0;
                     s.won            = (entry.contains("won") && entry["won"].is_number()) ? entry["won"].get<int>() : 0;
